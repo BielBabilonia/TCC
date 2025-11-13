@@ -1,0 +1,28 @@
+# janelas e taxas
+fs_current_hz: 100
+fs_tire_hz: 5
+window_sec: 5
+hop_sec: 1
+
+# limiares heurísticos
+i_nominal_a: 100   # ajuste ao seu arranjo (corrente típica)
+i_fraction_threshold: 0.8  # 0.8 * I_nom => "pisar fundo"
+
+# EMA de potência para autonomia (usado depois)
+ema_power_sec: 60
+
+# features ativadas
+features:
+  - mean_I
+  - std_I
+  - rms_I
+  - p95_I
+  - p99_I
+  - dIdt_max
+  - n_peaks_I
+  - time_above_thr_I
+  - mean_T
+  - max_T
+  - dTdt_mean
+  - dTdt_max
+  - deltaT
