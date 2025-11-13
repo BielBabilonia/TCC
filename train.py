@@ -22,10 +22,15 @@ def main(args):
     df_f = filter_signals(df, alpha_T=0.1, ma_I=9)
     # 4) features por janelas
     df_feat = build_feature_table(df_f, cfg)
-
+    print("Distribuição global (antes da heurística, pode estar vazia):")
+    if "label" in df_feat.columns:
+        print(df_feat["label"].value_counts(dropna=False))
     # 5) rotulagem heurística (se você ainda não tiver coluna 'label')
     if "label" not in df_feat.columns:
         df_feat = heuristic_labels(df_feat, by="session_id" if "session_id" in df_feat.columns else None)
+        print("Distribuição global (antes da heurística, pode estar vazia):")
+        if "label" in df_feat.columns:
+            print(df_feat["label"].value_counts(dropna=False))
 
     # 6) montar X/y e grupos (split por sessão/arquivo pra evitar vazamento)
     label_col = "label"
