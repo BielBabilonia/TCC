@@ -107,7 +107,7 @@ def parse_line(line, headers=None):
 
 def main():
     ap = argparse.ArgumentParser(description="Inferência em tempo real via porta serial (I_A + T_pneu)")
-    ap.add_argument("--port", required=True, help="porta serial (ex.: COM5, /dev/ttyUSB0, /dev/ttyACM0)")
+    ap.add_argument("--port", default="COM4", help="porta serial padrão (pode ser sobrescrita)")
     ap.add_argument("--baud", type=int, default=115200, help="baud rate (padrão: 115200)")
     ap.add_argument("--artifact", default="artifacts/model_joblib.pkl", help="modelo salvo")
     ap.add_argument("--cfg", default="configs/base.yaml", help="YAML com janelas/limiares (opcional)")
