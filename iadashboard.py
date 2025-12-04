@@ -19,10 +19,6 @@ from src.features import extract_features_window
 
 LABEL_MAP = {0: "conservador", 1: "moderado", 2: "agressivo"}
 
-# parâmetros da bateria
-BAT_KWH = 26.8
-BAT_VOLT = 360.0
-
 # ---------------------------------------------------------
 # FLASK + SOCKETIO
 # ---------------------------------------------------------
@@ -67,38 +63,6 @@ def safe_number(x, lim_min=None, lim_max=None):
     if lim_max is not None and x > lim_max:
         return None
     return x
-
-
-def estimate_autonomy_from_series(I_series, soc_series, bat_kwh=BAT_KWH, bat_v=BAT_VOLT):
-    """
-    Estima quanto tempo (h, min) restaria até descarregar a bateria,
-    assumindo que:
-      - a corrente média (I) se mantém
-      - o SOC médio representa o estado atual da bateria
-    """
-    if I_series is None or len(I_series) == 0:
-        return None, None
-    if soc_series is None or len(soc_series) == 0:
-        return None, None
-
-    I_med = float(I_series.mean())
-    soc_med = float(soc_series.mean())  # em %
-
-    if I_med <= 0 or soc_med <= 0:
-        return None, None
-
-    # Potência média em kW
-    P_kw = (I_med * bat_v) / 1000.0
-    if P_kw <= 0:
-        return None, None
-
-    # Energia restante (kWh) baseada no SOC médio
-    E_rest_kwh = bat_kwh * (soc_med / 100.0)
-
-    # Tempo até zerar SOC
-    horas = E_rest_kwh / P_kw
-    minutos = horas * 60.0
-    return horas, minutos
 
 
 # ---------------------------------------------------------
@@ -167,8 +131,10 @@ def ia_inference_thread(args):
 
             df_buf = df_buf.sort_values("timestamp").reset_index(drop=True)
 
-            # janela temporal para features
+            # --- 1) criar a janela ---
             win = last_window(df_buf, window_sec)
+
+            # --- 2) extrair features ---
             feats = compute_features_for_window(win, cfg)
             if feats is None:
                 time.sleep(5)
@@ -188,14 +154,6 @@ def ia_inference_thread(args):
                 time.sleep(5)
                 continue
 
-            # média das últimas 10 correntes e SOC para autonomia
-            recent = df_buf.tail(10)
-            horas_rest, minutos_rest = estimate_autonomy_from_series(
-                recent["I_A"] if "I_A" in recent.columns else None,
-                recent["SOC_pct"] if "SOC_pct" in recent.columns else None,
-            )
-
-
             # alertas
             alerta = ""
             if temp > 80 and current > 200:
@@ -213,8 +171,6 @@ def ia_inference_thread(args):
                 "current": float(current),
                 "classe": LABEL_MAP.get(yhat, "desconhecido"),
                 "alerta": alerta,
-                "autonomia_h": float(horas_rest) if horas_rest is not None else None,
-                "autonomia_min": float(minutos_rest) if minutos_rest is not None else None,
             }
 
             socketio.emit('atualiza_dados', out)
@@ -231,21 +187,21 @@ def enviar_dados_randomicos():
         temp = random.uniform(40, 120)
         current = random.uniform(70, 400)
 
-        # autonomia com base em 10 leituras fictícias (aqui só 1, mas ok para teste)
-        fake_series = pd.Series([current] * 10)
-        horas_rest, minutos_rest = estimate_autonomy_from_series(fake_series)
-
         classe = "conservador"
-        if temp > 80 or current > 200:
+        alerta = ""
+        if temp > 80 and current > 200:
             classe = "agressivo"
+            alerta = "Condução extremamente agressiva!"
+        elif temp > 80:
+            alerta = "Superaquecimento do pneu!"
+        elif current > 200:
+            alerta = "Corrente muito alta (aceleração agressiva)."
 
         socketio.emit("atualiza_dados", {
             "temp": float(temp),
             "current": float(current),
             "classe": classe,
-            "alerta": "",
-            "autonomia_h": float(horas_rest) if horas_rest is not None else None,
-            "autonomia_min": float(minutos_rest) if minutos_rest is not None else None,
+            "alerta": alerta,
         })
         time.sleep(2)
 

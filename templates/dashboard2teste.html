@@ -103,20 +103,6 @@
             font-size: 40px;
             margin-top: 10px;
         }
-
-        /* NOVO: bloco de autonomia estimada */
-        .autonomia-box {
-            margin-top: 20px;
-            text-align: center;
-            color: #00ff7f;
-        }
-        .autonomia-titulo {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .autonomia-valor {
-            font-size: 20px;
-        }
     </style>
 </head>
 <body>
@@ -129,8 +115,8 @@
                 <div class="gauge-label">Temperatura dos Pneus (°C)</div>
                 <div class="gauge">
                     <svg>
-                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
-                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"/>
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"></circle>
+                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"></circle>
                     </svg>
                     <div class="value">0 °C</div>
                 </div>
@@ -139,22 +125,16 @@
                 <div class="gauge-label">Corrente da Bateria (A)</div>
                 <div class="gauge">
                     <svg>
-                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
-                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"/>
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"></circle>
+                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"></circle>
                     </svg>
                     <div class="value">0 A</div>
                 </div>
             </div>
             <div class="info">
                 <div id="classe" class="classe">Estilo de direção: --</div>
-                <div id="alert" class="alert" style="display: none;">Alerta: Valores fora do normal!</div>
-
-                <!-- NOVO BLOCO: AUTONOMIA ESTIMADA -->
-                <div class="autonomia-box">
-                    <h2 class="autonomia-titulo">Autonomia estimada</h2>
-                    <p id="autonomia-texto" class="autonomia-valor">
-                        Calculando...
-                    </p>
+                <div id="alert" class="alert" style="display: none;">
+                    Alerta: Valores fora do normal!
                 </div>
             </div>
         </div>
@@ -172,18 +152,23 @@
 
             // Atualizar gauge de temperatura (assumindo max 100°C para 100%)
             const tempPercent = Math.min(temp, 100);
-            const tempDash = (tempPercent / 100) * 502.65; // Circunferência aproximada
-            document.querySelector('.gauge-container:nth-child(1) .gauge-fill').style.strokeDasharray = `${tempDash} 502.65`;
-            document.querySelector('.gauge-container:nth-child(1) .value').textContent = temp + ' °C';
+            const tempDash = (tempPercent / 100) * 502.65; // circunferência aproximada
+            document.querySelector('.gauge-container:nth-child(1) .gauge-fill')
+                    .style.strokeDasharray = `${tempDash} 502.65`;
+            document.querySelector('.gauge-container:nth-child(1) .value')
+                    .textContent = temp + ' °C';
 
             // Atualizar gauge de corrente (assumindo max 200A para 100%)
             const currentPercent = Math.min(current / 2, 100);
             const currentDash = (currentPercent / 100) * 502.65;
-            document.querySelector('.gauge-container:nth-child(2) .gauge-fill').style.strokeDasharray = `${currentDash} 502.65`;
-            document.querySelector('.gauge-container:nth-child(2) .value').textContent = current + ' A';
+            document.querySelector('.gauge-container:nth-child(2) .gauge-fill')
+                    .style.strokeDasharray = `${currentDash} 502.65`;
+            document.querySelector('.gauge-container:nth-child(2) .value')
+                    .textContent = current + ' A';
 
             // Estilo de direção
-            document.getElementById('classe').textContent = "Estilo de direção: " + classe;
+            document.getElementById('classe').textContent =
+                "Estilo de direção: " + classe;
 
             // Alerta
             const alertDiv = document.getElementById('alert');
@@ -192,14 +177,6 @@
                 alertDiv.style.display = 'block';
             } else {
                 alertDiv.style.display = 'none';
-            }
-
-            // NOVO: Autonomia estimada
-            const autoElem = document.getElementById('autonomia-texto');
-            if (autoElem && data.autonomia_min != null && data.autonomia_h != null) {
-                const min = Number(data.autonomia_min);
-                const h = Number(data.autonomia_h);
-                autoElem.textContent = `${min.toFixed(1)} minutos (~${h.toFixed(2)} h) até descarregar 26,8 kWh`;
             }
         });
     </script>
