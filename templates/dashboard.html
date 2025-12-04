@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard do Carro Elétrico</title>
+    <style>
+        .dashboard { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+        h1 { text-align: center; color: #333;}
+        .gauge { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;}
+        .gauge-label { font-weight: bold; margin-bottom: 10px;}
+        .gauge-bar { height: 20px; background-color: #e0e0e0; border-radius: 10px; overflow: hidden;}
+        .gauge-fill { height: 100%; background-color: #4CAF50; transition: width 0.5s;}
+        .value { text-align: center; margin-top: 10px; font-size: 18px;}
+        .alert { color: red; font-weight: bold;}
+        .classe { color: #388e3c; text-align: center; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Dashboard de Simulação - Carro Elétrico</h1>
+        
+        <div class="gauge">
+            <div class="gauge-label">Temperatura dos pneus (°C)</div>
+            <div class="gauge-bar">
+                <div id="temp-fill" class="gauge-fill" style="width: 0%;"></div>
+            </div>
+            <div class="value">Temperatura: <span id="temp-value">0</span> °C</div>
+        </div>
+        
+        <div class="gauge">
+            <div class="gauge-label">Corrente da Bateria (A)</div>
+            <div class="gauge-bar">
+                <div id="current-fill" class="gauge-fill" style="width: 0%;"></div>
+            </div>
+            <div class="value">Corrente: <span id="current-value">0</span> A</div>
+        </div>
+        
+        <div id="classe" class="classe">Estilo de direção: --</div>
+        <div id="alert" class="alert" style="display: none;">Alerta: Valores fora do normal!</div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('atualiza_dados', (data) => {
+            const temp = data.temp;
+            const current = data.current;
+            const classe = data.classe;
+            const alerta = data.alerta;
+
+            document.getElementById('temp-fill').style.width = (temp ? temp : 0) + '%';
+            document.getElementById('temp-value').textContent = temp ? temp : 0;
+
+            document.getElementById('current-fill').style.width = (current ? current/2 : 0) + '%';
+            document.getElementById('current-value').textContent = current ? current : 0;
+
+            document.getElementById('classe').textContent = "Estilo de direção: " + (classe ? classe : "--");
+
+            const alertDiv = document.getElementById('alert');
+            if(alerta && alerta.trim() != "") {
+                alertDiv.textContent = alerta;
+                alertDiv.style.display = 'block';
+            } else {
+                alertDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+    

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard do Carro Elétrico</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .dashboard {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a, #333);
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            border: 2px solid #00ffff;
+        }
+        .car-icon {
+            flex: 1;
+            text-align: center;
+            margin-right: 20px;
+            justify-content: center;
+            align-items: center;
+            padding-left: 80px;
+        }
+        .car-icon img {
+            width: 600px;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 14px #00ffff);
+        }
+
+        .gauges {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gauge-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .gauge-label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #00ffff;
+        }
+        .gauge {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            overflow: hidden;
+        }
+        .gauge svg {
+            width: 100%;
+            height: 100%;
+        }
+        .gauge circle {
+            fill: none;
+            stroke-width: 10;
+        }
+        .gauge-bg {
+            stroke: #333;
+        }
+        .gauge-fill {
+            stroke: #4CAF50;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.5s;
+        }
+        .value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .info {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .classe {
+            font-size: 40px;
+            color: #00ff00;
+        }
+        .alert {
+            color: #ff0000;
+            font-weight: bold;
+            font-size: 40px;
+            margin-top: 10px;
+        }
+
+        /* NOVO: bloco de autonomia estimada */
+        .autonomia-box {
+            margin-top: 20px;
+            text-align: center;
+            color: #00ff7f;
+        }
+        .autonomia-titulo {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .autonomia-valor {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="car-icon">
+            <img src="{{ url_for('static', filename='img/carro.png') }}" alt="Carro Elétrico">
+        </div>
+        <div class="gauges">
+            <div class="gauge-container">
+                <div class="gauge-label">Temperatura dos Pneus (°C)</div>
+                <div class="gauge">
+                    <svg>
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"/>
+                    </svg>
+                    <div class="value">0 °C</div>
+                </div>
+            </div>
+            <div class="gauge-container">
+                <div class="gauge-label">Corrente da Bateria (A)</div>
+                <div class="gauge">
+                    <svg>
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" cx="100" cy="100" r="80" stroke-dasharray="0 502.65"/>
+                    </svg>
+                    <div class="value">0 A</div>
+                </div>
+            </div>
+            <div class="info">
+                <div id="classe" class="classe">Estilo de direção: --</div>
+                <div id="alert" class="alert" style="display: none;">Alerta: Valores fora do normal!</div>
+
+                <!-- NOVO BLOCO: AUTONOMIA ESTIMADA -->
+                <div class="autonomia-box">
+                    <h2 class="autonomia-titulo">Autonomia estimada</h2>
+                    <p id="autonomia-texto" class="autonomia-valor">
+                        Calculando...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('atualiza_dados', (data) => {
+            const temp = data.temp || 0;
+            const current = data.current || 0;
+            const classe = data.classe || "--";
+            const alerta = data.alerta || "";
+
+            // Atualizar gauge de temperatura (assumindo max 100°C para 100%)
+            const tempPercent = Math.min(temp, 100);
+            const tempDash = (tempPercent / 100) * 502.65; // Circunferência aproximada
+            document.querySelector('.gauge-container:nth-child(1) .gauge-fill').style.strokeDasharray = `${tempDash} 502.65`;
+            document.querySelector('.gauge-container:nth-child(1) .value').textContent = temp + ' °C';
+
+            // Atualizar gauge de corrente (assumindo max 200A para 100%)
+            const currentPercent = Math.min(current / 2, 100);
+            const currentDash = (currentPercent / 100) * 502.65;
+            document.querySelector('.gauge-container:nth-child(2) .gauge-fill').style.strokeDasharray = `${currentDash} 502.65`;
+            document.querySelector('.gauge-container:nth-child(2) .value').textContent = current + ' A';
+
+            // Estilo de direção
+            document.getElementById('classe').textContent = "Estilo de direção: " + classe;
+
+            // Alerta
+            const alertDiv = document.getElementById('alert');
+            if (alerta && alerta.trim() !== "") {
+                alertDiv.textContent = alerta;
+                alertDiv.style.display = 'block';
+            } else {
+                alertDiv.style.display = 'none';
+            }
+
+            // NOVO: Autonomia estimada
+            const autoElem = document.getElementById('autonomia-texto');
+            if (autoElem && data.autonomia_min != null && data.autonomia_h != null) {
+                const min = Number(data.autonomia_min);
+                const h = Number(data.autonomia_h);
+                autoElem.textContent = `${min.toFixed(1)} minutos (~${h.toFixed(2)} h) até descarregar 26,8 kWh`;
+            }
+        });
+    </script>
+</body>
+</html>
